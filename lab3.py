@@ -9,6 +9,11 @@ a = -2
 b = 2
 
 
+Mises_statistics = {0.25: 0.209, 0.15: 0.284, 0.1: 0.347,
+                    0.05: 0.461, 0.025: 0.581, 0.01: 0.743,
+                    0.005: 0.869, 0.001: 1.167}
+
+
 def Y(x):
     return x*x
 
@@ -57,6 +62,15 @@ def possibility_method(variation, M, n):         # равновероятнос�
     return A_pos, B_pos, f_pos
 
 
+def interval_method(variation, M, n):       # равноинтервальный метод
+    delta = (variation[-1] - variation[0])/M
+    A_intervals = [variation[0] + (i-1)*delta for i in range(1, M+1)]
+    B_intervals = [variation[0] + i*delta for i in range(1, M+1)]
+    v_interval = number_of_values_on_interval(M, variation, A_intervals, B_intervals)
+    f_interv = [v_interval[i]/(n*delta) for i in range(M)]  # эмпирическая функция плотности распределения
+    return A_intervals, B_intervals, f_interv
+
+
 def histogram_n_polygon(M, func, A, B):
     plt.title("Гистограмма\n и полигон\n распределения")
     max_height = [0] * (M + 1)
@@ -100,6 +114,7 @@ def generation_of_the_row(n):
     eps = [np.random.uniform(0, 1) for i in range(n)]
     x = [(ei * (b - a) + a) for ei in eps]
     y = [Y(xi) for xi in x]
+
     variation = sorted(y)
     return variation
 
@@ -133,7 +148,7 @@ def emp_theor_graphics(ay, by, variation):
 
 
 def Pearsons_chi_squared_test(M, variation, n):
-    A_pos, B_pos, f_pos = possibility_method(variation, M, n)
+    A_pos, B_pos, f_pos = interval_method(variation, M, n)
     graphics(M, f_pos, A_pos, B_pos)
     v_interval = number_of_values_on_interval(M, variation, A_pos, B_pos)
     p_interval = [v_interval[i] / n for i in range(M)]
@@ -168,29 +183,27 @@ def Mises_criterion(variation, n):
     f_theor = [F(variation[i]) for i in range(n)]
     D = [(f_emp[i] - f_theor[i]) ** 2 for i in range(n)]
     n_w_sq = 1 / (12 * n) + sum(D)
-    mises_crit = 0.744          # alpha = 0.01
     print("Mises criterion:")
-    if n_w_sq < mises_crit:
-        print("True: ", n_w_sq, " < ", mises_crit)
+    alpha = 0.01
+    if n_w_sq < Mises_statistics.get(alpha):
+        print("True: ", n_w_sq, " < ", Mises_statistics.get(alpha))
     else:
-        print("False: ", n_w_sq, " > ", mises_crit)
+        print("False: ", n_w_sq, " > ", Mises_statistics.get(alpha))
 
 
 if __name__ == "__main__":
-    '''n = 200                                  # Критерий Пирсона
+    n = 200                                  # Критерий Пирсона
     variation = generation_of_the_row(n)
     M = find_interval_number(n)
-    Pearsons_chi_squared_test(M, variation, n)'''
+    Pearsons_chi_squared_test(M, variation, n)
 
     n = 30                                  # Критерий Колмогорова
     variation = generation_of_the_row(n)
     Kolmogorov_test(variation, n)
 
-    '''n = 50                                 # Критерий Мизеса
+    n = 50                                 # Критерий Мизеса
     variation = generation_of_the_row(n)
-    Mises_criterion(variation, n)'''
-
-
+    Mises_criterion(variation, n)
 
 
 
